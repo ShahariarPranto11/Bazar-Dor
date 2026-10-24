@@ -17,9 +17,16 @@ const getCategories = async (): Promise<Category[]> => {
     throw new Error("Failed to fetch categories");
   }
 
-  const data: Category[] = await res.json();
+  const result = await res.json();
 
-  return data;
+  // API যদি categories-কে data property-এর মধ্যে দেয়
+  const categories = Array.isArray(result) ? result : result.data;
+
+  if (!Array.isArray(categories)) {
+    throw new Error("Invalid categories API response");
+  }
+
+  return categories;
 };
 
 const NavLinks = async () => {
@@ -31,7 +38,7 @@ const NavLinks = async () => {
         {categories.map((category) => (
           <Link
             key={category.id}
-            href={`/${category.slug}`}
+            href={`/category/${category.slug}`}
             className="flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium text-gray-700 transition hover:text-green-700"
           >
             <span>{category.icon}</span>
@@ -44,3 +51,4 @@ const NavLinks = async () => {
 };
 
 export default NavLinks;
+
