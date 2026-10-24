@@ -1,12 +1,12 @@
 
+import Hero from "@/components/Hero";
+import ProductSections from "@/components/ProductSections";
 
-
-const page = () => {
+export default function HomePage() {
   return (
-    <div>
-      
-    </div>
+    <main>
+      <Hero />
+      <ProductSections />
+    </main>
   );
-};
-
-export default page;
+}
