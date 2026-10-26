@@ -1,5 +1,6 @@
 import Image from "next/image";
 import NavLinks from "./NavLinks";
+import Link from "next/link";
 
 const Navbar = () => {
   const date = new Date().toLocaleDateString("bn-BD", {
@@ -23,27 +24,33 @@ const Navbar = () => {
               priority
             />
           </div>
-          <div>
-            <h1 className="text-lg font-bold leading-tight text-gray-900">
-              বাজার দর
-            </h1>
-            <p className="mt-1 text-xs text-gray-500">{date}</p>
-          </div>
+          <Link href="/" className="text-inherit no-underline">
+            <div>
+              <h1 className="font-bold text-2xl"> বাজার দর</h1>
+              <p>{date}</p>
+            </div>
+          </Link>
         </div>
 
         {/* Right Side Buttons */}
         <div className="flex shrink-0 items-center gap-4">
-          <button className="text-sm font-medium text-gray-800 hover:text-green-700">
+          <Link
+            href="/signin"
+            className="text-sm font-medium text-gray-800 hover:text-green-700"
+          >
             সাইন ইন
-          </button>
+          </Link>
 
-          <button className="rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800">
+          <Link
+            href="/signup"
+            className="rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800"
+          >
             সাইন আপ
-          </button>
+          </Link>
         </div>
       </div>
 
-      <NavLinks/>
+      <NavLinks />
     </nav>
   );
 };
