@@ -1,61 +1,60 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-
 import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  
-const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
-
-  try {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
     const formData = new FormData(e.currentTarget);
+    const formValue = Object.fromEntries(formData.entries());
+    try {
+      const { data, error: signUpError } = await authClient.signUp.email({
+        name: formValue.name as string,
+        email: formValue.email as string,
+        password: formValue.password as string,
+        callbackURL: "/",
+      });
 
-    const result = await authClient.signUp.email({
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-    });
-
-    console.log("Signup response:", result);
-
-    if (error) {
-  console.log("Signup error:", error);
-  setError(JSON.stringify(error));
-  return;
-}
-
-    router.push("/signin");
-  } catch (err) {
-    console.error("Signup exception:", err);
-    setError(
-      err instanceof Error ? err.message : "Unknown error"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-const handleGoogleSignIn = async () => {
- await authClient.signIn.social({
-      provider: "google",
-    });
+      if (signUpError) {
+        setError(signUpError.message ?? "অ্যাকাউন্ট তৈরি করা যায়নি।");
+      } else if (data) {
+        router.push("/");
+      }
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "অ্যাকাউন্ট তৈরি করা যায়নি।",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGithubSignIn = async () => {
- await authClient.signIn.social({
-      provider: "github",
+  const handleSocialSignIn = async (provider: "google" | "github") => {
+    setError("");
+    const { error: signInError } = await authClient.signIn.social({
+      provider,
+      callbackURL: "/",
     });
-  }
+
+    if (signInError) {
+      setError(signInError.message ?? "সাইন ইন করা যায়নি।");
+    }
+  };
+
+  const handleGoogleSignIn = () => handleSocialSignIn("google");
+  const handleGithubSignIn = () => handleSocialSignIn("github");
+
   return (
     <div className="min-h-screen bg-[#f1f5f0] px-4 py-8">
       <div className="mx-auto max-w-md">
@@ -68,7 +67,7 @@ const handleGoogleSignIn = async () => {
         </p>
 
         <form
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit}
           className="space-y-4 rounded-xl border border-gray-200 bg-white p-6"
         >
           <div>
@@ -109,7 +108,6 @@ const handleGoogleSignIn = async () => {
 
           <button
             type="submit"
-            disabled={loading}
             className="btn w-full bg-green-700 text-white hover:bg-green-800"
           >
             {loading ? "অপেক্ষা করুন..." : "অ্যাকাউন্ট তৈরি করুন"}

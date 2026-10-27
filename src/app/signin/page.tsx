@@ -2,43 +2,51 @@
 
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import toast from "react-hot-toast";
 
-const SignInPage = () => {
+export default function SignInPage() {
+  const router = useRouter();
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEmailSignIn = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+    setError("");
 
     const formData = new FormData(e.currentTarget);
-    const user = Object.fromEntries(formData.entries()) as {
-      email: string;
-      password: string;
-    };
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+
+    if (!email || !password) {
+      setError("ইমেইল ও পাসওয়ার্ড প্রয়োজন।");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const { data, error: signInError } = await authClient.signIn.email({
-        ...user,
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
         callbackURL: "/",
       });
 
-      if (data) {
-        toast.success("Sign In successfull!");
+      if (error) {
+        const message = error.message || "সাইন ইন করতে ব্যর্থ হয়েছে।";
+        setError(message);
+        toast.error(message);
         return;
       }
 
-      if (signInError) {
-        const message = signInError.message || "Something went wrong!";
-        setError(message);
-        toast.error(message);
+      if (data) {
+        toast.success("সাইন ইন সফল হয়েছে");
+        router.push("/");
       }
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong!";
+        err instanceof Error ? err.message : "সাইন ইন করতে ব্যর্থ হয়েছে।";
       setError(message);
       toast.error(message);
     } finally {
@@ -47,33 +55,17 @@ const SignInPage = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setError(null);
-
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Google sign in failed.";
-      setError(message);
-      toast.error(message);
-    }
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
   };
 
   const handleGithubSignIn = async () => {
-    setError(null);
-
-    try {
-      await authClient.signIn.social({
-        provider: "github",
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "GitHub sign in failed.";
-      setError(message);
-      toast.error(message);
-    }
+    await authClient.signIn.social({
+      provider: "github",
+      callbackURL: "/",
+    });
   };
 
   return (
@@ -88,7 +80,7 @@ const SignInPage = () => {
         </p>
 
         <form
-          onSubmit={onSubmit}
+          onSubmit={handleEmailSignIn}
           className="space-y-4 rounded-xl border border-gray-200 bg-white p-6"
         >
           <div>
@@ -171,6 +163,4 @@ const SignInPage = () => {
       </div>
     </div>
   );
-};
-
-export default SignInPage;
+}
